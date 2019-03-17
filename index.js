@@ -187,7 +187,8 @@ function makeMove() {
     // three ways to implement this
     //1. fill the first non empty block
     //2. fill a block randomly
-    //3. smart fill based on some kind of dfs based search 
+    //3. smart fill based on some kind of dfs based search - this must have been solution
+    //4. custom fill - smart bruteforce
     customFill();
     numberOfMoves++;
     updateStatus();
@@ -239,18 +240,43 @@ function customFill() {
         fillFirstAvailable(row);
         return;
     }
-    // fill any availble corners skipping the already handled row & col
-    // this should have been block diagonal paths
+    // fill any availble corners skipping the already handled row & col --doesn't work
+    // else if(numberOfMoves == 3){
+    //     let corners = [[0,0], [0,2], [2,0], [2,2]];
+    //     let compRow = computerMoves[0][0];
+    //     let compCol = computerMoves[0][1];
+    //     for(let i = 0; i < corners.length; i++){
+    //         let row = corners[i][0];
+    //         let col = corners[i][1];
+    //         if(grid[row][col] === 0 && row != compRow && col != compCol){
+    //             grid[row][col] = currentPlayer;
+    //             return;
+    //         }
+    //     }
+    // }
+    // find digaonal where X count is max and fill that diagonal
     else if(numberOfMoves == 3){
-        let corners = [[0,0], [0,2], [2,0], [2,2]];
-        let compRow = computerMoves[0][0];
-        let compCol = computerMoves[0][1];
-        for(let i = 0; i < corners.length; i++){
-            let row = corners[i][0];
-            let col = corners[i][1];
-            if(grid[row][col] === 0 && row != compRow && col != compCol){
-                grid[row][col] = currentPlayer;
-                return;
+        let path = findDiagPath();
+        let diag1 = [[0,0], [1,1], [2,2]];
+        let diag2 = [[0,2], [1,1], [2,0]];
+        if(path == 1){
+            for(let i = 0; i < diag1.length; i++){
+                let row = diag1[i][0];
+                let col = diag1[i][1];
+                if(grid[row][col] === 0){
+                    grid[row][col] = currentPlayer;
+                    return
+                }
+            }
+        }
+        else {
+            for(let i = 0; i < diag2.length; i++){
+                let row = diag2[i][0];
+                let col = diag2[i][1];
+                if(grid[row][col] === 0){
+                    grid[row][col] = currentPlayer;
+                    return
+                }
             }
         }
     }
@@ -267,6 +293,26 @@ function fillFirstAvailable(row){
             grid[row][col] = currentPlayer;
             return;
         }
+    }
+}
+
+function findDiagPath(){
+    let count = 0;
+    let diag1 = [[0,0], [1,1], [2,2]];
+    let diag2 = [[0,2], [1,1], [2,0]];
+    // diag1
+    for(let i = 0; i < diag1.length; i++){
+        let row = diag1[i][0];
+        let col = diag1[i][1];
+        if(grid[row][col] === human){
+            count++
+        }
+    }
+    if(count == 2){
+        return 1;
+    }
+    else {
+        return 2;
     }
 }
 
