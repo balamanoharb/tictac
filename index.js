@@ -3,8 +3,8 @@
 * Here the “box” represents one placeholder for either a “X” or a “0”
 * We have a 2D array to represent the arrangement of X or O is a grid
 * 0 -> empty box
-* 1 -> box with X
-* 2 -> box with O
+* 1 -> box with X - player
+* 2 -> box with O - computer
 *
 * Below are the tasks which needs to be completed:
 * Imagine you are playing with the computer so every alternate move should be done by the computer
@@ -179,215 +179,217 @@ function togglePlayer() {
     updateStatus();
 }
 
-function getRandom() {
-    return Math.floor(Math.random()*GRID_LENGTH);
-}
 
 function makeMove() {
-    // three ways to implement this
-    //1. fill the first non empty block
-    //2. fill a block randomly
-    //3. smart fill based on some kind of dfs based search - this must have been solution
-    //4. custom fill - smart bruteforce
-    customFill();
+    AI.init(grid);
+    let bestMove = AI.bestMove();
+    grid[bestMove.row][bestMove.col] = computer;
     numberOfMoves++;
     updateStatus();
-}
-
-function firstNonFilledBox(){
-    // find the first non filled box and fill it.
-    // this is the easiest to implement
-    // this should skip all computer rows
-    for(let row = 0; row < GRID_LENGTH; row++){
-        for(let col = 0; col < GRID_LENGTH; col++){
-            if(grid[row][col] === 0){
-                grid[row][col] = currentPlayer;
-                return;
-            }
-        }
-    }
-}
-
-function randomFill(){
-    let filled = false;
-    let count = 0;
-    // if the random has been running for morethan 100
-    // use the other approach
-    while(!filled){
-        let row = getRandom();
-        let col = getRandom();
-        count++;
-        // stop after trying 100 times
-        if(count > 100){
-            firstNonFilledBox();
-            filled = true;
-        }
-        if(grid[row][col] === 0){
-            grid[row][col] = currentPlayer;
-            filled = true;
-        }
-    }
-}
-
-function customFill() {
-    //smart brute force
-    //computer can make only four moves 2,4,6,8
-    //i.e if the number of moves made is odd
-    //fill any block on row where x is there
-    if(numberOfMoves == 1){
-        //find the row where x is found
-        let row = humanMoves[0][0];
-        fillFirstAvailable(row);
-        return;
-    }
-    // fill any availble corners skipping the already handled row & col --doesn't work
-    // else if(numberOfMoves == 3){
-    //     let corners = [[0,0], [0,2], [2,0], [2,2]];
-    //     let compRow = computerMoves[0][0];
-    //     let compCol = computerMoves[0][1];
-    //     for(let i = 0; i < corners.length; i++){
-    //         let row = corners[i][0];
-    //         let col = corners[i][1];
-    //         if(grid[row][col] === 0 && row != compRow && col != compCol){
-    //             grid[row][col] = currentPlayer;
-    //             return;
-    //         }
-    //     }
-    // }
-    // find digaonal where X count is max and fill that diagonal
-    else if(numberOfMoves == 3){
-        let path = findDiagPath();
-        let diag1 = [[0,0], [1,1], [2,2]];
-        let diag2 = [[0,2], [1,1], [2,0]];
-        if(path == 1){
-            for(let i = 0; i < diag1.length; i++){
-                let row = diag1[i][0];
-                let col = diag1[i][1];
-                if(grid[row][col] === 0){
-                    grid[row][col] = currentPlayer;
-                    return
-                }
-            }
-        }
-        else {
-            for(let i = 0; i < diag2.length; i++){
-                let row = diag2[i][0];
-                let col = diag2[i][1];
-                if(grid[row][col] === 0){
-                    grid[row][col] = currentPlayer;
-                    return
-                }
-            }
-        }
-    }
-    // make the other two moves randomly
-    else {
-        randomFill();
-    }
-}
-
-function fillFirstAvailable(row){
-    for(let col=0; col < GRID_LENGTH; col++){
-        if(grid[row][col] === 0){
-            computerMoves.push([row,col])
-            grid[row][col] = currentPlayer;
-            return;
-        }
-    }
-}
-
-function findDiagPath(){
-    let count = 0;
-    let diag1 = [[0,0], [1,1], [2,2]];
-    let diag2 = [[0,2], [1,1], [2,0]];
-    // diag1
-    for(let i = 0; i < diag1.length; i++){
-        let row = diag1[i][0];
-        let col = diag1[i][1];
-        if(grid[row][col] === human){
-            count++
-        }
-    }
-    if(count == 2){
-        return 1;
-    }
-    else {
-        return 2;
-    }
-}
-
-function dfsFill() {
-    //trying out all paths - probably emulate the full play for both palyers
-    //trying all paths will probably take too much time
-    //limit based on depth may be
-    //take the first winning move from dfs as winning move ?
-    //may be block all possible winning paths for X ?
-    //blocking all routes will make the game less interesting
 }
 
 // brute force win checker
 // player - 1 : X - Human
 // player - 2 : 0 - Computer
 function checkWin() {
-    return (
-        checkDiag() || 
-        checkRows() || 
-        checkCols()
-    );
-}
-
-function checkDiag() {
-    // top left to bottom right
-    // 00, 11, 22
-    let result = true
-    for(let idx = 0; idx < GRID_LENGTH; idx++){
-        if(grid[idx][idx] !== currentPlayer){
-            result = false;
-            break;
-        }
-    }
-    if(result) {
-        return result;
-    }
-    // bottom left to top right
-    // 20, 11, 02 -1,+1
-    let rowIdx = GRID_LENGTH - 1;
-    let colIdx = 0;
-    while(rowIdx >= 0){
-        if(grid[rowIdx][colIdx] !== currentPlayer){
-            return false;
-        }
-        rowIdx--;
-        colIdx++;
-    }
-    return true;
-}
-
-function checkRows() {
-    for(let row = 0; row < GRID_LENGTH; row++){
-        let result = grid[row].reduce((acc, val) => acc && val === currentPlayer, true);
-        if(result){
-            return true
-        }
-    }
-    return false;
-}
-
-function checkCols() {
-    for(let col = 0; col < GRID_LENGTH; col++){
-        let curColResult = true;
-        for(let row = 0; row < GRID_LENGTH; row++){
-            if( curColResult && grid[row][col] !== currentPlayer ){
-                curColResult = false;
-            }
-        }
-        if(curColResult){
-            return true;
-        }
-    }
-    return false;
+    AI.init(grid)
+    return AI.checkWin(currentPlayer);
 }
 
 function checkDraw() {
     return (numberOfMoves === Math.pow(GRID_LENGTH,2));
 }
+
+let AI = (function(){
+    // private vars
+    var board;
+    var blank = 0;
+    var human = 1;
+    var computer = 2;
+    var maxScore = 10;
+    var minScore = -10;
+    var drawScore = 0;
+    var currentPlayer;
+
+    function init(grid) {
+        board = [];
+        // clone each row and push it to board
+        for(let row = 0; row < grid.length; row++){
+            let rowClone = [...grid[row]];
+            board.push(rowClone);
+        }
+    }
+
+    // checkers - copy from above
+    function checkWin(player) {
+        currentPlayer = player;
+        return (
+            checkDiag1() || 
+            checkDiag2() ||
+            checkRows() || 
+            checkColumns()
+        );
+    }
+
+    function checkRows() {
+        for(let row = 0; row < board.length; row++){
+            let result = board[row].reduce((acc, val) => acc && val === currentPlayer, true);
+            if(result){
+                return true
+            }
+        }
+        return false;
+    }
+
+    function checkColumns() {
+        for(let col = 0; col < board.length; col++){
+            let curColResult = true;
+            for(let row = 0; row < board.length; row++){
+                if( curColResult && board[row][col] !== currentPlayer ){
+                    curColResult = false;
+                }
+            }
+            if(curColResult){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function checkDiag1() {
+        // top left to bottom right
+        for(let idx = 0; idx < board.length; idx++){
+            if(board[idx][idx] !== currentPlayer){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function checkDiag2() {
+        // top right to bottom left
+        let rowIdx = board.length - 1;
+        let colIdx = 0;
+        while(rowIdx >= 0){
+            if(board[rowIdx][colIdx] !== currentPlayer){
+                return false;
+            }
+            rowIdx--;
+            colIdx++;
+        }
+        return true;
+    }
+
+    // returns the position to fill
+    function evaluate() {
+        // 1 - human - minimizing player
+        // 2 - computer - maximizing player
+        if(checkWin(human)){
+            return minScore;
+        }
+        
+        if(checkWin(computer)){
+            return maxScore
+        }
+
+        // nobody won
+        return drawScore;
+    }
+    
+    function isMovesLeft() {
+        for(let i = 0; i < board.length; i++){
+            for(let j = 0; j < board.length; j++) {
+                if(board[i][j] === blank){
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    function findBestMove() {
+        let bestVal = -1000; 
+        bestMove = {};
+        bestMove.row = -1; 
+        bestMove.col = -1; 
+    
+        for (let i = 0; i< board.length; i++) 
+        { 
+            for (let j = 0; j< board.length; j++) 
+            { 
+                // Check if cell is empty 
+                if (board[i][j] === blank){
+                    // Make the move 
+                    board[i][j] = computer;
+                    // compute evaluation function for this 
+                    // move.
+                    let moveVal = minimax(0, human); 
+    
+                    // Undo the move
+                    board[i][j] = blank; 
+    
+                    
+                    if (moveVal > bestVal) 
+                    { 
+                        bestMove.row = i; 
+                        bestMove.col = j; 
+                        bestVal = moveVal; 
+                    } 
+                } 
+            } 
+        }
+        return bestMove; 
+    }
+
+    //dfs based backtrack algo search which goes through all possibilities
+    function minimax(depth, player) {
+        console.log(depth, player);
+        let score = evaluate(); 
+        // if maximizer or minimizer has won
+        if (score === maxScore || score === minScore) {
+            return score;
+        }
+        if (!isMovesLeft()){
+            return drawScore;
+        }
+        // If this maximizer's move 
+        if (player === computer) {
+            let best = -10000;
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board.length; j++) {
+                    if (board[i][j] === blank) {
+                        // Make the move
+                        board[i][j] = computer;
+                        // recurse - backtrack
+                        best = Math.max( best, minimax(depth+1, human)); 
+                        // Undo the move 
+                        board[i][j] = blank; 
+                    }
+                }
+            }
+            return best;
+        }
+        else {
+            let best = 10000;
+            for (let i = 0; i<3; i++) { 
+                for (let j = 0; j<3; j++) {
+                    if (board[i][j] === blank) {
+                        // make the move
+                        board[i][j] = human;
+                        // recurse backtrack
+                        best = Math.min(best, minimax(depth+1, computer)); 
+                        // Undo the move 
+                        board[i][j] = blank; 
+                    }
+                }
+            }
+            return best; 
+        }
+    }
+
+    return {
+        init: init,
+        bestMove: findBestMove,
+        checkWin: checkWin
+    }
+})()
